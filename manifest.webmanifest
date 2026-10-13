@@ -1,6 +1,6 @@
 {
-  "name": "Gruppedeling",
-  "short_name": "Gruppedeling",
+  "name": "TeamSelector",
+  "short_name": "TeamSelector",
   "lang": "nn",
   "start_url": "./",
   "scope": "./",
