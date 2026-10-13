@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="nn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gruppedeling</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gruppedeling">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1f4fd8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f4; --panel:#ffffff; --ink:#14202b; --muted:#5d6b78; --line:#c9d2da;
+  --accent:#1f4fd8; --accent-ink:#ffffff; --zone:#f7f9fb; --zone-hot:#dce6ff;
+  --danger:#b3261e; --danger-ink:#ffffff;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10161c; --panel:#18212a; --ink:#e8eef4; --muted:#93a1ae; --line:#2d3944;
+    --accent:#6c93ff; --accent-ink:#0b1220; --zone:#141c24; --zone-hot:#22335f;
+    --danger:#ff8a80; --danger-ink:#2a0a07;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10161c; --panel:#18212a; --ink:#e8eef4; --muted:#93a1ae; --line:#2d3944;
+  --accent:#6c93ff; --accent-ink:#0b1220; --zone:#141c24; --zone-hot:#22335f;
+  --danger:#ff8a80; --danger-ink:#2a0a07;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:16px;-webkit-tap-highlight-color:transparent;
+}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+#app{height:100%;display:flex;flex-direction:column;max-width:900px;margin:0 auto}
+.screen{flex:1;min-height:0;display:flex;flex-direction:column}
+
+/* header with team picker */
+.head{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.head select{
+  flex:1;min-width:0;padding:9px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);
+  font-family:"Barlow Semi Condensed",sans-serif;font-weight:700;font-size:19px;
+}
+.icon{
+  width:42px;height:42px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);font-size:22px;line-height:1;
+  display:grid;place-items:center;padding:0;flex:none;
+}
+
+/* tab bar */
+.tabs{display:flex;border-top:1px solid var(--line);background:var(--panel)}
+.tabs button{
+  flex:1;border:0;background:none;padding:14px 6px;font-family:"Barlow Semi Condensed",sans-serif;
+  font-weight:600;font-size:18px;color:var(--muted);border-top:3px solid transparent;margin-top:-1px;
+}
+.tabs button[aria-selected="true"]{color:var(--ink);border-top-color:var(--accent)}
+
+.btn{
+  border:1.5px solid var(--line);background:var(--panel);border-radius:8px;padding:10px 14px;
+  font-family:"Barlow Semi Condensed",sans-serif;font-weight:600;font-size:16px;
+}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:var(--danger-ink)}
+
+/* players screen */
+.add{display:flex;gap:8px;padding:12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.add input,.field{
+  flex:1;min-width:0;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);
+}
+.bar{display:flex;align-items:center;gap:8px;padding:10px 12px;flex-wrap:wrap}
+.bar .count{font-family:"Barlow Semi Condensed",sans-serif;font-weight:600;font-size:18px;margin-right:auto}
+.bar .btn{padding:7px 12px;font-size:15px}
+.list{flex:1;min-height:0;overflow-y:auto;padding:0 12px 12px;display:flex;flex-direction:column;gap:6px}
+.row{
+  display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);
+  border-radius:10px;padding:6px 8px 6px 12px;min-height:52px;
+}
+.row.off .name{color:var(--muted)}
+.row.off .rate{opacity:.45}
+.row input[type=checkbox]{width:24px;height:24px;accent-color:var(--accent);flex:none;margin:0}
+.name{flex:1;min-width:0;font-size:18px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rate{display:flex;align-items:center;gap:4px;flex:none}
+.rate button{
+  width:30px;height:34px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);font-size:20px;line-height:1;
+  display:grid;place-items:center;padding:0;
+}
+.rate .val{
+  width:38px;height:34px;border-radius:8px;display:grid;place-items:center;color:#14202b;
+  font-family:"Barlow Semi Condensed",sans-serif;font-weight:700;font-size:19px;
+}
+.del{width:30px;height:34px;border:0;background:none;color:var(--muted);font-size:22px;border-radius:8px;padding:0}
+.del:hover{color:var(--danger)}
+.tag{
+  width:46px;height:34px;flex:none;padding:0;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);
+  font-family:"Barlow Semi Condensed",sans-serif;font-weight:700;font-size:18px;text-align:center;text-align-last:center;
+  -webkit-appearance:none;appearance:none;
+}
+.tag.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.row.off .tag{opacity:.45}
+.hint{padding:0 12px 8px;color:var(--muted);font-size:14px;line-height:1.35}
+.chip .tg{
+  display:inline-grid;place-items:center;width:18px;height:18px;margin-left:6px;border-radius:50%;
+  background:#14202b;color:#fff;font-size:12px;font-weight:700;vertical-align:1px;
+}
+.empty{margin:auto;text-align:center;color:var(--muted);padding:32px;max-width:340px;line-height:1.4}
+.legend{display:flex;align-items:center;gap:8px;padding:0 12px 8px;color:var(--muted);font-size:14px}
+.legend i{flex:1;height:8px;border-radius:4px;background:linear-gradient(90deg,hsl(0 70% 72%),hsl(60 70% 72%),hsl(120 70% 72%))}
+
+/* groups screen */
+.top{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--panel);flex-wrap:wrap}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{
+  border:0;background:var(--bg);width:36px;height:38px;font-family:"Barlow Semi Condensed",sans-serif;
+  font-weight:700;font-size:19px;border-right:1px solid var(--line);padding:0;
+}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.top .btn{padding:8px 11px;font-size:15px}
+.top .spacer{flex:1}
+.toggle{display:flex;align-items:center;gap:6px;font-size:15px;color:var(--muted);user-select:none}
+.toggle input{width:20px;height:20px;accent-color:var(--accent);margin:0}
+.status{
+  display:flex;align-items:center;gap:8px;padding:6px 12px 8px;background:var(--panel);border-bottom:1px solid var(--line);
+  font-size:14px;color:var(--muted);
+}
+.status .what{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.status .btn{padding:6px 12px;font-size:15px}
+
+.board{flex:1;min-height:0;display:grid;gap:3px;background:var(--line)}
+.group{
+  position:relative;background:var(--zone);min-height:0;min-width:0;overflow-y:auto;
+  padding:32px 8px 8px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px;
+}
+.group.hot{background:var(--zone-hot)}
+.group .label{
+  position:absolute;left:10px;top:7px;font-family:"Barlow Semi Condensed",sans-serif;font-weight:600;font-size:14px;color:var(--muted);
+  pointer-events:none;
+}
+.group .pills{position:absolute;right:6px;top:4px;display:flex;gap:4px;pointer-events:none}
+.pill{
+  min-width:24px;height:22px;padding:0 7px;border-radius:11px;display:grid;place-items:center;
+  font-family:"Barlow Semi Condensed",sans-serif;font-weight:700;font-size:14px;white-space:nowrap;
+}
+.pill.n{background:var(--ink);color:var(--bg)}
+.pill.avg{color:#14202b}
+.chip{
+  touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;
+  padding:7px 12px;border-radius:8px;color:#14202b;font-family:"Barlow Semi Condensed",sans-serif;font-weight:600;font-size:18px;
+  line-height:1.1;box-shadow:0 1px 0 rgba(0,0,0,.18);white-space:nowrap;
+}
+.chip.lifted{opacity:.3}
+.group.free{display:block;overflow:hidden;padding:0}
+.group.free .chip{position:absolute;transform:translate(-50%,-50%);z-index:1}
+.ghost.free{transform:translate(-50%,-50%) scale(1.05)}
+.btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ghost{
+  position:fixed;z-index:50;pointer-events:none;transform:translate(-50%,-120%) scale(1.08);
+  box-shadow:0 8px 20px rgba(0,0,0,.35);cursor:grabbing;
+}
+.board-empty{flex:1;display:grid;place-items:center}
+
+/* saved screen */
+.saved{flex:1;min-height:0;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.sv{
+  display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:10px 8px 10px 14px;
+}
+.sv.open{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.sv .t{flex:1;min-width:0}
+.sv .t b{display:block;font-family:"Barlow Semi Condensed",sans-serif;font-size:19px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sv .t span{color:var(--muted);font-size:14px}
+
+/* modal */
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(10,16,22,.55);display:grid;place-items:center;padding:16px}
+.modal{
+  width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;
+  box-shadow:0 20px 50px rgba(0,0,0,.4);
+}
+.modal h2{margin:0 0 6px;font-family:"Barlow Semi Condensed",sans-serif;font-weight:700;font-size:22px;line-height:1.15}
+.modal p{margin:0 0 12px;color:var(--muted);line-height:1.4}
+.modal .field{width:100%;margin:6px 0 4px;display:block}
+.area{height:170px;resize:none;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.3}
+.acts{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.acts .btn{flex:1 1 auto;min-width:100px}
+.acts.stack{flex-direction:column}
+.acts.stack .btn{width:100%}
+.welcome{margin:auto;width:100%;max-width:380px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.welcome h1{margin:0;font-family:"Barlow Semi Condensed",sans-serif;font-size:30px;line-height:1.1}
+.welcome p{margin:0;color:var(--muted);line-height:1.4}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function(){
+  var KEY = 'gruppedeling-v2', OLD = 'gruppedeling-v1';
+
+  /* ---------- state ---------- */
+  function uid(){ return 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+  function blank(){ return { teams: [], activeTeam: null, view: 'players', updated: 0 }; }
+  function newTeam(name){
+    return { id: uid(), name: name, players: [], groupCount: 3, balanced: false, assign: {}, saved: [], loadedId: null, free: false, pos: {} };
+  }
+  function normalize(s){
+    s = s || blank();
+    if (!Array.isArray(s.teams)) s.teams = [];
+    s.teams.forEach(function(t){
+      if (!Array.isArray(t.players)) t.players = [];
+      if (!Array.isArray(t.saved)) t.saved = [];
+      if (!t.assign) t.assign = {};
+      if (!t.groupCount) t.groupCount = 3;
+      t.balanced = !!t.balanced;
+      if (t.loadedId === undefined) t.loadedId = null;
+      t.free = !!t.free;
+      if (!t.pos) t.pos = {};
+    });
+    if (!s.teams.some(function(t){ return t.id === s.activeTeam; })) s.activeTeam = s.teams.length ? s.teams[0].id : null;
+    if (['players','groups','saved'].indexOf(s.view) < 0) s.view = 'players';
+    s.updated = s.updated || 0;
+    return s;
+  }
+  function loadLocal(){
+    try { var r = localStorage.getItem(KEY); if (r) return normalize(JSON.parse(r)); } catch(e){}
+    try {
+      var o = localStorage.getItem(OLD);
+      if (o){
+        var old = JSON.parse(o), t = newTeam('Mitt lag'), s = blank();
+        t.players = old.players || []; t.groupCount = old.groupCount || 3;
+        t.assign = old.assign || {}; t.balanced = !!old.balanced;
+        s.teams.push(t); s.activeTeam = t.id;
+        return normalize(s);
+      }
+    } catch(e){}
+    return blank();
+  }
+  var S = loadLocal();
+  function team(){ return S.teams.find(function(t){ return t.id === S.activeTeam; }) || null; }
+
+  var dbRef = null, syncTimer = null;
+  function saveLocal(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+  function scheduleSync(){
+    if (!dbRef) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(function(){
+      try { dbRef.set({ json: JSON.stringify(S), updated: S.updated }).catch(function(){}); } catch(e){}
+    }, 800);
+  }
+  function save(){ S.updated = Date.now(); saveLocal(); scheduleSync(); }
+
+  function initDb(){
+    if (!(window.claude && window.claude.use)) return;
+    Promise.all([window.claude.use('db'), window.claude.use('user')]).then(function(r){
+      var db = r[0], user = r[1];
+      if (!db || !user) return;
+      return user.id().then(function(id){
+        if (!id) return;
+        var ref = db.doc('data/users/' + id + '/state');
+        return ref.get().then(function(snap){
+          dbRef = ref;
+          if (snap.exists){
+            var d = snap.data() || {}, remoteUpdated = d.updated || 0;
+            if (remoteUpdated > S.updated){
+              try { S = normalize(JSON.parse(d.json)); S.updated = remoteUpdated; saveLocal(); render(); } catch(e){}
+            } else if (S.updated > remoteUpdated){ scheduleSync(); }
+          } else if (S.teams.length){ scheduleSync(); }
+        });
+      });
+    }).catch(function(){});
+  }
+
+  /* ---------- helpers ---------- */
+  function present(t){ return t.players.filter(function(p){ return p.present; }); }
+  function shuffle(a){
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; }
+    return a;
+  }
+  function color(r){ r = Math.max(1, Math.min(10, r)); return 'hsl(' + Math.round((r - 1) / 9 * 120) + ' 70% 72%)'; }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function fmt(x){ return (Math.round(x * 10) / 10).toFixed(1).replace('.', ','); }
+
+  function distribute(t){
+    var n = t.groupCount, items = [], byTag = {};
+    shuffle(present(t)).forEach(function(p){
+      if (p.tag){ (byTag[p.tag] = byTag[p.tag] || []).push(p); }
+      else items.push([p]);
+    });
+    Object.keys(byTag).forEach(function(k){ items.push(byTag[k]); });
+    items = shuffle(items);
+    function total(it){ return it.reduce(function(s, p){ return s + p.rating; }, 0); }
+    items.sort(function(a, b){
+      if (b.length !== a.length) return b.length - a.length;
+      return t.balanced ? total(b) / b.length - total(a) / a.length : 0;
+    });
+    var cnt = [], sum = [];
+    for (var g = 0; g < n; g++){ cnt.push(0); sum.push(0); }
+    t.assign = {};
+    t.pos = {};
+    items.forEach(function(it){
+      var best = [];
+      for (var i = 0; i < n; i++){
+        if (!best.length){ best = [i]; continue; }
+        var b0 = best[0];
+        var better = cnt[i] < cnt[b0] || (t.balanced && cnt[i] === cnt[b0] && sum[i] < sum[b0]);
+        var tie = cnt[i] === cnt[b0] && (!t.balanced || sum[i] === sum[b0]);
+        if (better) best = [i]; else if (tie) best.push(i);
+      }
+      var gi = best[Math.floor(Math.random() * best.length)];
+      it.forEach(function(p){ t.assign[p.id] = gi; });
+      cnt[gi] += it.length; sum[gi] += total(it);
+    });
+  }
+  function sizes(t){
+    var c = []; for (var i = 0; i < t.groupCount; i++) c.push(0);
+    Object.keys(t.assign).forEach(function(id){ var g = t.assign[id]; if (g < c.length) c[g]++; });
+    return c;
+  }
+  function sync(t){
+    var ids = {};
+    present(t).forEach(function(p){ ids[p.id] = true; });
+    Object.keys(t.assign).forEach(function(id){
+      if (!ids[id] || t.assign[id] >= t.groupCount){ delete t.assign[id]; delete t.pos[id]; }
+    });
+    if (!Object.keys(t.assign).length && present(t).length){ distribute(t); return; }
+    present(t).forEach(function(p){
+      if (t.assign[p.id] === undefined){
+        var mate = p.tag ? present(t).filter(function(q){ return q.id !== p.id && q.tag === p.tag && t.assign[q.id] !== undefined; })[0] : null;
+        if (mate){ t.assign[p.id] = t.assign[mate.id]; return; }
+        var c = sizes(t), min = Math.min.apply(null, c), cand = [];
+        c.forEach(function(v, i){ if (v === min) cand.push(i); });
+        t.assign[p.id] = cand[Math.floor(Math.random() * cand.length)];
+      }
+    });
+  }
+
+  /* ---------- modal ---------- */
+  function modal(o){
+    var ov = document.createElement('div');
+    ov.className = 'overlay';
+    var box = document.createElement('div');
+    box.className = 'modal';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    var h = '';
+    if (o.title) h += '<h2>' + esc(o.title) + '</h2>';
+    if (o.text) h += '<p>' + esc(o.text) + '</p>';
+    if (o.input) h += '<input class="field" type="text" maxlength="40" autocomplete="off" placeholder="' + esc(o.input.placeholder || '') + '" value="' + esc(o.input.value || '') + '">';
+    if (o.area) h += '<textarea class="field area" spellcheck="false" autocomplete="off" placeholder="' + esc(o.area.placeholder || '') + '"' + (o.area.readonly ? ' readonly' : '') + '>' + esc(o.area.value || '') + '</textarea>';
+    h += '<div class="acts' + (o.stack ? ' stack' : '') + '"></div>';
+    box.innerHTML = h;
+    var inp = box.querySelector('input');
+    var area = box.querySelector('textarea');
+    var acts = box.querySelector('.acts');
+    function close(){ document.removeEventListener('keydown', onKey); ov.remove(); }
+    function onKey(e){ if (e.key === 'Escape') close(); }
+    document.addEventListener('keydown', onKey);
+    o.actions.forEach(function(a){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn' + (a.kind ? ' ' + a.kind : '');
+      b.textContent = a.label;
+      b.addEventListener('click', function(){
+        var v = inp ? inp.value : (area ? area.value : '');
+        if (a.fn){
+          if (a.fn(v) === false){ if (inp) inp.focus(); return; }
+        }
+        close();
+      });
+      acts.appendChild(b);
+    });
+    if (inp) inp.addEventListener('keydown', function(e){
+      if (e.key === 'Enter'){
+        var primary = o.actions.filter(function(a){ return a.kind === 'primary'; })[0];
+        if (primary){ e.preventDefault(); acts.querySelectorAll('button')[o.actions.indexOf(primary)].click(); }
+      }
+    });
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+    if (inp){ inp.focus(); inp.select(); } else if (area){ area.focus(); if (o.area.readonly) area.select(); } else { var last = acts.querySelector('button'); if (last) last.focus(); }
+  }
+  function confirmBox(title, text, yesLabel, onYes){
+    modal({ title: title, text: text, actions: [
+      { label: 'Nei' },
+      { label: yesLabel || 'Ja', kind: 'danger', fn: function(){ onYes(); } }
+    ]});
+  }
+
+  /* ---------- render ---------- */
+  var app = document.getElementById('app');
+
+  function render(){
+    saveLocal();
+    app.innerHTML = '';
+    var t = team();
+    if (!t){ renderWelcome(); return; }
+
+    var head = document.createElement('div');
+    head.className = 'head';
+    var opts = S.teams.map(function(x){ return '<option value="' + x.id + '"' + (x.id === t.id ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('');
+    head.innerHTML = '<select aria-label="Vel lag">' + opts + '</select>' +
+      '<button class="icon" data-a="new" aria-label="Nytt lag">+</button>' +
+      '<button class="icon" data-a="more" aria-label="Meir om laget">⋯</button>';
+    head.querySelector('select').addEventListener('change', function(e){ S.activeTeam = e.target.value; save(); render(); });
+    head.addEventListener('click', function(e){
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.a === 'new') newTeamDialog();
+      else if (b.dataset.a === 'more') teamMenu(t);
+    });
+    app.appendChild(head);
+
+    var screen = document.createElement('div');
+    screen.className = 'screen';
+    app.appendChild(screen);
+    if (S.view === 'players') renderPlayers(screen, t);
+    else if (S.view === 'groups') renderGroups(screen, t);
+    else renderSaved(screen, t);
+
+    var tabs = document.createElement('div');
+    tabs.className = 'tabs';
+    tabs.setAttribute('role', 'tablist');
+    tabs.innerHTML =
+      '<button role="tab" data-v="players" aria-selected="' + (S.view === 'players') + '">Spelarar</button>' +
+      '<button role="tab" data-v="groups" aria-selected="' + (S.view === 'groups') + '">Grupper</button>' +
+      '<button role="tab" data-v="saved" aria-selected="' + (S.view === 'saved') + '">Lagra' + (t.saved.length ? ' (' + t.saved.length + ')' : '') + '</button>';
+    tabs.addEventListener('click', function(e){
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.v === 'groups') sync(t);
+      S.view = b.dataset.v; save(); render();
+    });
+    app.appendChild(tabs);
+  }
+
+  function renderWelcome(){
+    var w = document.createElement('form');
+    w.className = 'welcome';
+    w.innerHTML = '<h1>Lag det første laget</h1><p>Kvart lag har sin eigen spelarliste og sine eigne lagra gruppeinndelingar. Du kan leggje til fleire lag seinare.</p>' +
+      '<input class="field" type="text" maxlength="40" placeholder="Namn på laget" aria-label="Namn på laget" autocomplete="off">' +
+      '<button class="btn primary" type="submit">Opprett lag</button>';
+    w.addEventListener('submit', function(e){
+      e.preventDefault();
+      var v = w.querySelector('input').value.trim();
+      if (!v) return;
+      var t = newTeam(v); S.teams.push(t); S.activeTeam = t.id; S.view = 'players'; save(); render();
+    });
+    app.appendChild(w);
+  }
+
+  function newTeamDialog(){
+    modal({ title: 'Nytt lag', input: { placeholder: 'Namn på laget' }, actions: [
+      { label: 'Avbryt' },
+      { label: 'Opprett', kind: 'primary', fn: function(v){
+          v = v.trim(); if (!v) return false;
+          var t = newTeam(v); S.teams.push(t); S.activeTeam = t.id; S.view = 'players'; save(); render();
+      } }
+    ]});
+  }
+  function backupDialog(){
+    modal({ title: 'Sikkerheitskopi', text: 'Gjeld alle lag, spelarar og lagra inndelingar. Bruk dette til å ta vare på data eller flytte dei til ei anna eining eller utgåve av appen.', stack: true, actions: [
+      { label: 'Vis kopi av alt', kind: 'primary', fn: function(){ setTimeout(showExport, 0); } },
+      { label: 'Hent inn frå kopi', fn: function(){ setTimeout(showImport, 0); } },
+      { label: 'Lukk' }
+    ]});
+  }
+  function showExport(){
+    modal({ title: 'Kopi av alt', text: 'Trykk Kopier og lim teksten inn i eit notat eller ei melding til deg sjølv.', area: { value: JSON.stringify(S), readonly: true }, actions: [
+      { label: 'Lukk' },
+      { label: 'Kopier', kind: 'primary', fn: function(){
+          var ta = document.querySelector('.modal textarea'), ok = false;
+          ta.select();
+          try { ok = document.execCommand('copy'); } catch(e){}
+          if (!ok && navigator.clipboard){ navigator.clipboard.writeText(ta.value).catch(function(){}); }
+          var p = document.querySelector('.modal p');
+          if (p) p.textContent = 'Teksten er markert. Blei ho ikkje kopiert, hald fingeren på teksten og vel Kopier.';
+          return false;
+      } }
+    ]});
+  }
+  function showImport(){
+    modal({ title: 'Hent inn frå kopi', text: 'Lim inn teksten du kopierte frå ei anna utgåve av appen.', area: { placeholder: 'Lim inn her' }, actions: [
+      { label: 'Avbryt' },
+      { label: 'Hent inn', kind: 'primary', fn: function(v){
+          var parsed = null;
+          try { parsed = JSON.parse(v); } catch(e){}
+          if (!parsed || !Array.isArray(parsed.teams)){
+            var p = document.querySelector('.modal p');
+            if (p) p.textContent = 'Klarte ikkje lese kopien. Sjekk at du har lime inn heile teksten.';
+            return false;
+          }
+          setTimeout(function(){
+            confirmBox('Vil du erstatte alt i appen?', 'Alle lag, spelarar og inndelingar som ligg her no blir bytte ut med innhaldet i kopien.', 'Ja, erstatt', function(){
+              S = normalize(parsed); S.view = 'players'; save(); render();
+            });
+          }, 0);
+      } }
+    ]});
+  }
+  function teamMenu(t){
+    modal({ title: t.name, stack: true, actions: [
+      { label: 'Gje nytt namn', fn: function(){
+          setTimeout(function(){
+            modal({ title: 'Nytt namn på laget', input: { value: t.name }, actions: [
+              { label: 'Avbryt' },
+              { label: 'Lagre', kind: 'primary', fn: function(v){ v = v.trim(); if (!v) return false; t.name = v; save(); render(); } }
+            ]});
+          }, 0);
+      } },
+      { label: 'Sikkerheitskopi', fn: function(){ setTimeout(backupDialog, 0); } },
+      { label: 'Slett laget', kind: 'danger', fn: function(){
+          setTimeout(function(){
+            confirmBox('Vil du slette «' + t.name + '»?', 'Alle spelarar og lagra inndelingar i laget blir borte.', 'Ja, slett', function(){
+              S.teams = S.teams.filter(function(x){ return x.id !== t.id; });
+              S.activeTeam = S.teams.length ? S.teams[0].id : null;
+              save(); render();
+            });
+          }, 0);
+      } },
+      { label: 'Lukk' }
+    ]});
+  }
+
+  /* ---------- players ---------- */
+  function tagSelect(p){
+    var o = '<option value=""' + (p.tag ? '' : ' selected') + '>–</option>';
+    'ABCDEFGHIJ'.split('').forEach(function(L){ o += '<option value="' + L + '"' + (p.tag === L ? ' selected' : '') + '>' + L + '</option>'; });
+    return '<select class="tag' + (p.tag ? ' on' : '') + '" aria-label="Bokstav for ' + esc(p.name) + '">' + o + '</select>';
+  }
+  function renderPlayers(root, t){
+    var add = document.createElement('form');
+    add.className = 'add';
+    add.innerHTML = '<input type="text" placeholder="Legg til spelar" aria-label="Namn på spelar" autocomplete="off" maxlength="30"><button class="btn primary" type="submit">Legg til</button>';
+    add.addEventListener('submit', function(e){
+      e.preventDefault();
+      var inp = add.querySelector('input');
+      var names = inp.value.split(/[,\n]/).map(function(s){ return s.trim(); }).filter(Boolean);
+      if (!names.length) return;
+      names.forEach(function(nm){ t.players.push({ id: uid(), name: nm, rating: 5, tag: '', present: true }); });
+      save(); render();
+      var again = app.querySelector('.add input'); if (again) again.focus();
+    });
+    root.appendChild(add);
+
+    var total = t.players.length, here = present(t).length;
+    var bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.innerHTML = '<span class="count">' + here + ' av ' + total + ' til stades</span>' +
+      '<button class="btn" data-a="all">Vel alle</button><button class="btn" data-a="none">Ingen</button>';
+    bar.addEventListener('click', function(e){
+      var b = e.target.closest('button'); if (!b) return;
+      t.players.forEach(function(p){ p.present = b.dataset.a === 'all'; });
+      save(); render();
+    });
+    root.appendChild(bar);
+
+    if (!total){
+      var em = document.createElement('div');
+      em.className = 'empty';
+      em.textContent = 'Ingen spelarar i dette laget enno. Skriv inn eit namn over, eller lim inn fleire namn skilde med komma. Namn og nivå blir lagra, så du slepp å leggje dei inn på nytt.';
+      root.appendChild(em);
+      return;
+    }
+
+    var lg = document.createElement('div');
+    lg.className = 'legend';
+    lg.innerHTML = '<span>1</span><i></i><span>10</span>';
+    root.appendChild(lg);
+    var hint = document.createElement('div');
+    hint.className = 'hint';
+    hint.textContent = 'Spelarar med same bokstav (A–J) hamnar i same gruppe når du blandar.';
+    root.appendChild(hint);
+
+    var list = document.createElement('div');
+    list.className = 'list';
+    function keepScroll(){ var k = list.scrollTop; render(); var l = app.querySelector('.list'); if (l) l.scrollTop = k; }
+    t.players.forEach(function(p){
+      var row = document.createElement('div');
+      row.className = 'row' + (p.present ? '' : ' off');
+      row.innerHTML =
+        '<input type="checkbox" ' + (p.present ? 'checked' : '') + ' aria-label="Til stades: ' + esc(p.name) + '">' +
+        '<span class="name">' + esc(p.name) + '</span>' +
+        '<span class="rate"><button data-r="-1" aria-label="Lågare nivå">−</button>' +
+        '<span class="val" style="background:' + color(p.rating) + '">' + p.rating + '</span>' +
+        '<button data-r="1" aria-label="Høgare nivå">+</button></span>' +
+        tagSelect(p) +
+        '<button class="del" aria-label="Fjern ' + esc(p.name) + '">×</button>';
+      row.querySelector('input').addEventListener('change', function(e){ p.present = e.target.checked; save(); keepScroll(); });
+      row.querySelector('.name').addEventListener('click', function(){ p.present = !p.present; save(); keepScroll(); });
+      row.querySelector('.tag').addEventListener('change', function(e){ p.tag = e.target.value; save(); keepScroll(); });
+      row.querySelectorAll('[data-r]').forEach(function(b){
+        b.addEventListener('click', function(){
+          p.rating = Math.max(1, Math.min(10, p.rating + parseInt(b.dataset.r, 10)));
+          save(); keepScroll();
+        });
+      });
+      row.querySelector('.del').addEventListener('click', function(){
+        confirmBox('Vil du fjerne denne spelaren?', p.name, 'Ja, fjern', function(){
+          t.players = t.players.filter(function(x){ return x.id !== p.id; });
+          delete t.assign[p.id];
+          save(); keepScroll();
+        });
+      });
+      list.appendChild(row);
+    });
+    root.appendChild(list);
+  }
+
+  /* ---------- groups ---------- */
+  function renderGroups(root, t){
+    var top = document.createElement('div');
+    top.className = 'top';
+    var seg = '<div class="seg" role="group" aria-label="Tal på grupper">';
+    for (var i = 1; i <= 6; i++) seg += '<button data-n="' + i + '" aria-pressed="' + (t.groupCount === i) + '">' + i + '</button>';
+    seg += '</div>';
+    top.innerHTML = seg +
+      '<button class="btn" data-a="shuffle">Bland</button>' +
+      '<span class="spacer"></span>' +
+      '<label class="toggle"><input type="checkbox" data-a="bal" ' + (t.balanced ? 'checked' : '') + '>Jamn nivå</label>';
+    top.addEventListener('click', function(e){
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.n){ t.groupCount = parseInt(b.dataset.n, 10); distribute(t); save(); render(); }
+      else if (b.dataset.a === 'shuffle'){ distribute(t); save(); render(); }
+    });
+    top.querySelector('[data-a=bal]').addEventListener('change', function(e){
+      t.balanced = e.target.checked; distribute(t); save(); render();
+    });
+    root.appendChild(top);
+
+    var pl = present(t);
+    var loaded = t.saved.filter(function(s){ return s.id === t.loadedId; })[0];
+    var st = document.createElement('div');
+    st.className = 'status';
+    st.innerHTML = '<span class="what">' + (loaded ? 'Henta frå lagra: ' + esc(loaded.name) : 'Ikkje lagra enno') + '</span>' +
+      '<button class="btn" data-a="free" aria-pressed="' + !!t.free + '"' + (pl.length ? '' : ' disabled') + '>Fri</button>' +
+      '<button class="btn" data-a="save"' + (pl.length ? '' : ' disabled') + '>Lagre</button>';
+    st.querySelector('[data-a=save]').addEventListener('click', function(){ saveDialog(t); });
+    st.querySelector('[data-a=free]').addEventListener('click', function(){
+      if (!t.free) measureFlow(t);
+      t.free = !t.free; save(); render();
+    });
+    root.appendChild(st);
+
+    if (!pl.length){
+      var be = document.createElement('div');
+      be.className = 'board-empty';
+      be.innerHTML = '<div class="empty">Ingen er avhaka. Gå til Spelarar og vel kven som er med, eller opne ei lagra inndeling.</div>';
+      root.appendChild(be);
+      return;
+    }
+
+    var n = t.groupCount;
+    var board = document.createElement('div');
+    board.className = 'board';
+    var cols = (n <= 3) ? 1 : 2;
+    var rows = Math.ceil(n / cols);
+    board.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, 1fr))';
+    board.style.gridTemplateRows = 'repeat(' + rows + ', minmax(0, 1fr))';
+
+    var groups = [], counts = [], sums = [];
+    for (var g = 0; g < n; g++){
+      var el = document.createElement('div');
+      el.className = 'group' + (t.free ? ' free' : '');
+      el.dataset.g = g;
+      if (n === 5 && g === 4) el.style.gridColumn = 'span 2';
+      el.innerHTML = '<span class="label">Gruppe ' + (g + 1) + '</span><span class="pills"></span>';
+      groups.push(el); counts.push(0); sums.push(0);
+      board.appendChild(el);
+    }
+    pl.slice().sort(function(a, b){ return a.name.localeCompare(b.name, 'nn'); }).forEach(function(p){
+      var gi = t.assign[p.id];
+      if (gi === undefined || gi >= n) return;
+      var chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.style.background = color(p.rating);
+      chip.innerHTML = esc(p.name) + (p.tag ? '<b class="tg">' + p.tag + '</b>' : '');
+      chip.dataset.id = p.id;
+      attachDrag(chip, p.id, t);
+      groups[gi].appendChild(chip);
+      counts[gi]++; sums[gi] += p.rating;
+    });
+    if (t.free){
+      groups.forEach(function(el){
+        var chips = el.querySelectorAll('.chip'), total = chips.length;
+        chips.forEach(function(c, i){
+          var id = c.dataset.id;
+          if (!t.pos[id]) t.pos[id] = defaultPos(i, total);
+          c.style.left = (t.pos[id].x * 100) + '%';
+          c.style.top = (t.pos[id].y * 100) + '%';
+        });
+      });
+    }
+    groups.forEach(function(el, i){
+      var pills = el.querySelector('.pills');
+      var avg = counts[i] ? sums[i] / counts[i] : null;
+      pills.innerHTML =
+        '<span class="pill avg" title="Snitt nivå" style="background:' + (avg === null ? 'var(--line)' : color(avg)) + '">Ø ' + (avg === null ? '–' : fmt(avg)) + '</span>' +
+        '<span class="pill n" title="Tal spelarar">' + counts[i] + '</span>';
+    });
+    root.appendChild(board);
+  }
+
+  function defaultPos(i, total){
+    var cols = Math.min(3, Math.max(1, Math.ceil(Math.sqrt(total)))), rows = Math.ceil(total / cols);
+    return { x: (i % cols + 0.5) / cols, y: 0.2 + ((Math.floor(i / cols) + 0.5) / rows) * 0.76 };
+  }
+  function measureFlow(t){
+    document.querySelectorAll('.group').forEach(function(g){
+      if (g.scrollHeight > g.clientHeight + 1) return;
+      var W = g.clientWidth, H = g.clientHeight;
+      g.querySelectorAll('.chip').forEach(function(c){
+        var id = c.dataset.id;
+        if (!id || t.pos[id]) return;
+        t.pos[id] = { x: (c.offsetLeft + c.offsetWidth / 2) / W, y: (c.offsetTop + c.offsetHeight / 2) / H };
+      });
+    });
+  }
+  function snapPos(t){
+    var o = {};
+    present(t).forEach(function(p){ if (t.pos[p.id]) o[p.id] = { x: t.pos[p.id].x, y: t.pos[p.id].y }; });
+    return o;
+  }
+  function snapshot(t){
+    var a = {};
+    present(t).forEach(function(p){ if (t.assign[p.id] !== undefined) a[p.id] = t.assign[p.id]; });
+    return a;
+  }
+  function saveDialog(t){
+    var loaded = t.saved.filter(function(s){ return s.id === t.loadedId; })[0];
+    var acts = [{ label: 'Avbryt' }];
+    if (loaded){
+      acts.push({ label: 'Oppdater «' + loaded.name + '»', kind: 'primary', fn: function(){
+        loaded.assign = snapshot(t); loaded.groupCount = t.groupCount; loaded.pos = snapPos(t); loaded.free = !!t.free; save(); render();
+      } });
+    }
+    acts.push({ label: 'Lagre som ny', kind: loaded ? '' : 'primary', fn: function(v){
+      v = v.trim(); if (!v) return false;
+      var sv = { id: uid(), name: v, groupCount: t.groupCount, assign: snapshot(t), pos: snapPos(t), free: !!t.free, created: Date.now() };
+      t.saved.push(sv); t.loadedId = sv.id; save(); render();
+    } });
+    modal({
+      title: 'Lagre inndeling',
+      text: loaded ? 'Du kan oppdatere den opna inndelinga, eller gi ein ny inndeling eit namn.' : 'Gi inndelinga eit namn.',
+      input: { placeholder: 'Til dømes: Del 1' },
+      stack: true,
+      actions: acts.slice(1).concat([acts[0]])
+    });
+  }
+
+  /* ---------- saved ---------- */
+  function renderSaved(root, t){
+    if (!t.saved.length){
+      var em = document.createElement('div');
+      em.className = 'empty';
+      em.textContent = 'Ingen lagra inndelingar enno. Lag ei inndeling under Grupper og trykk «Lagre inndeling». Då kan du førebu fleire delar av treninga på førehand.';
+      root.appendChild(em);
+      return;
+    }
+    var list = document.createElement('div');
+    list.className = 'saved';
+    t.saved.forEach(function(sv){
+      var cnt = Object.keys(sv.assign).filter(function(id){ return t.players.some(function(p){ return p.id === id; }); }).length;
+      var row = document.createElement('div');
+      row.className = 'sv' + (sv.id === t.loadedId ? ' open' : '');
+      row.innerHTML = '<div class="t"><b>' + esc(sv.name) + '</b><span>' + cnt + ' spelarar · ' + sv.groupCount + (sv.groupCount === 1 ? ' gruppe' : ' grupper') + '</span></div>' +
+        '<button class="btn primary" data-a="open">Opne</button>' +
+        '<button class="del" aria-label="Slett ' + esc(sv.name) + '">×</button>';
+      row.querySelector('[data-a=open]').addEventListener('click', function(){
+        var exists = {}; t.players.forEach(function(p){ exists[p.id] = true; });
+        var a = {};
+        Object.keys(sv.assign).forEach(function(id){ if (exists[id]) a[id] = sv.assign[id]; });
+        t.players.forEach(function(p){ p.present = a[p.id] !== undefined; });
+        var pp = {};
+        Object.keys(sv.pos || {}).forEach(function(id){ if (a[id] !== undefined) pp[id] = sv.pos[id]; });
+        t.groupCount = sv.groupCount; t.assign = a; t.loadedId = sv.id; t.pos = pp; t.free = !!sv.free;
+        S.view = 'groups'; save(); render();
+      });
+      row.querySelector('.del').addEventListener('click', function(){
+        confirmBox('Vil du slette denne inndelinga?', sv.name, 'Ja, slett', function(){
+          t.saved = t.saved.filter(function(x){ return x.id !== sv.id; });
+          if (t.loadedId === sv.id) t.loadedId = null;
+          save(); render();
+        });
+      });
+      list.appendChild(row);
+    });
+    root.appendChild(list);
+  }
+
+  /* ---------- drag & drop (mus og touch) ---------- */
+  function groupElAt(x, y){
+    var el = document.elementFromPoint(x, y);
+    return el && el.closest ? el.closest('.group') : null;
+  }
+  function groupAt(x, y){
+    var g = groupElAt(x, y);
+    return g ? parseInt(g.dataset.g, 10) : null;
+  }
+  function attachDrag(chip, id, t){
+    chip.addEventListener('pointerdown', function(e){
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      var sx = e.clientX, sy = e.clientY, started = false, ghost = null, hot = null;
+      var crect = chip.getBoundingClientRect();
+      var offX = t.free ? e.clientX - (crect.left + crect.width / 2) : 0;
+      var offY = t.free ? e.clientY - (crect.top + crect.height / 2) : 0;
+      function setHot(gi){
+        if (hot === gi) return;
+        hot = gi;
+        document.querySelectorAll('.group').forEach(function(el){
+          el.classList.toggle('hot', gi !== null && parseInt(el.dataset.g, 10) === gi);
+        });
+      }
+      function move(ev){
+        if (!started){
+          if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return;
+          started = true;
+          ghost = chip.cloneNode(true);
+          ghost.className = 'chip ghost' + (t.free ? ' free' : '');
+          document.body.appendChild(ghost);
+          chip.classList.add('lifted');
+        }
+        ev.preventDefault();
+        ghost.style.left = (ev.clientX - offX) + 'px';
+        ghost.style.top = (ev.clientY - offY) + 'px';
+        setHot(groupAt(ev.clientX, ev.clientY));
+      }
+      function end(ev){
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', end);
+        window.removeEventListener('pointercancel', end);
+        if (!started) return;
+        var target = ev.type === 'pointercancel' ? null : groupAt(ev.clientX, ev.clientY);
+        if (ghost) ghost.remove();
+        if (target !== null){
+          if (t.free){
+            var gel = groupElAt(ev.clientX, ev.clientY), r = gel.getBoundingClientRect();
+            var hw = Math.min(0.5, crect.width / 2 / r.width), hh = Math.min(0.5, crect.height / 2 / r.height);
+            var px = (ev.clientX - offX - r.left) / r.width, py = (ev.clientY - offY - r.top) / r.height;
+            t.pos[id] = { x: Math.max(hw, Math.min(1 - hw, px)), y: Math.max(hh, Math.min(1 - hh, py)) };
+            t.assign[id] = target; save();
+          } else if (target !== t.assign[id]){
+            t.assign[id] = target; delete t.pos[id]; save();
+          }
+        }
+        render();
+      }
+      window.addEventListener('pointermove', move, { passive: false });
+      window.addEventListener('pointerup', end);
+      window.addEventListener('pointercancel', end);
+    });
+  }
+
+  /* ---------- start ---------- */
+  var t0 = team();
+  if (t0 && S.view === 'groups') sync(t0);
+  render();
+  initDb();
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0){
+  window.addEventListener('load', function(){ try { navigator.serviceWorker.register('sw.js'); } catch(e){} });
+}
+</script>
+</body>
+</html>
