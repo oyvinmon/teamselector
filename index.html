@@ -52,7 +52,7 @@ button{cursor:pointer}
 
 /* header with team picker */
 .head{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line)}
-.head select{
+.teamSelector{
   flex:1;min-width:0;padding:9px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);
   font-family:"Barlow Semi Condensed",sans-serif;font-weight:700;font-size:19px;
 }
@@ -412,10 +412,11 @@ button{cursor:pointer}
     var head = document.createElement('div');
     head.className = 'head';
     var opts = S.teams.map(function(x){ return '<option value="' + x.id + '"' + (x.id === t.id ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('');
-    head.innerHTML = '<select aria-label="Vel lag">' + opts + '</select>' +
+    head.innerHTML = '<select class="teamSelector" id="teamSelector" aria-label="Vel lag">' + opts + '</select>' +
       '<button class="icon" data-a="new" aria-label="Nytt lag">+</button>' +
       '<button class="icon" data-a="more" aria-label="Meir om laget">⋯</button>';
-    head.querySelector('select').addEventListener('change', function(e){ S.activeTeam = e.target.value; save(); render(); });
+    var teamSelector = head.querySelector('.teamSelector');
+    teamSelector.addEventListener('change', function(e){ S.activeTeam = e.target.value; save(); render(); });
     head.addEventListener('click', function(e){
       var b = e.target.closest('button'); if (!b) return;
       if (b.dataset.a === 'new') newTeamDialog();
